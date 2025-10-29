@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:nmsc_music/core/ui/colors.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:nmsc_todo/core/ui/Colors.dart';
+import 'package:nmsc_todo/presentation/screens/splash_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env");
+  final sUrl = dotenv.env["SUPABASE_URL"] ?? "";
+  final sKey = dotenv.env["SUPABASE_KEY"] ?? "";
+  await Supabase.initialize(url: sUrl, anonKey: sKey);
   runApp(const MyApp());
 }
 
@@ -17,11 +24,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: AppColor.primaryColor),
       ),
-      home: Scaffold(
-        body: const Center(
-          child: Text("Hello World!"),
-        ),
-      ),
+      home: const SplashScreen(),
     );
   }
 }
