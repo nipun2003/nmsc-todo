@@ -18,17 +18,16 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     _emailController.dispose();
     _passwordController.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -40,76 +39,60 @@ class _LoginPageState extends State<LoginPage> {
         ),
         child: SizedBox(
           width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const AuthLogo(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    "Welcome Back",
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSize.x_2),
-                  Text("Login to continue", style: textTheme.labelLarge),
-                ],
-              ),
-              const SizedBox(height: AppSize.x_12),
-              NmscEtField(
-                state: FieldState(
-                  validating: false
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: AppSize.x_4),
+                const AuthLogo(),
+                const SizedBox(height: AppSize.x_14),
+                Text("Login", style: textTheme.headlineMedium),
+                const SizedBox(height: AppSize.x_8),
+                NmscEtField(
+                  state: FieldState(validating: false),
+                  hintText: "Enter your email",
+                  keyboardType: TextInputType.emailAddress,
+                  type: TextFieldType.email,
+                  labelText: "Email*",
+                  controller: _emailController,
                 ),
-                hintText: "Enter your email",
-                keyboardType: TextInputType.emailAddress,
-                type: TextFieldType.email,
-                labelText: "Email*",
-                controller: _emailController,
-              ),
-              const SizedBox(height: AppSize.x_5),
-              NmscEtField(
-                state: FieldState(
-                  validating: false
+                const SizedBox(height: AppSize.x_5),
+                NmscEtField(
+                  state: FieldState(validating: false),
+                  hintText: "Enter your password",
+                  keyboardType: TextInputType.visiblePassword,
+                  type: TextFieldType.password,
+                  labelText: "Password*",
+                  controller: _passwordController,
                 ),
-                hintText: "Enter your password",
-                keyboardType: TextInputType.visiblePassword,
-                type: TextFieldType.password,
-                labelText: "Password*",
-                controller: _passwordController,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  NMSCTextButton(
-                    text: "Forgot Password?",
-                    onClick: () => {},
-                  )
-                ],
-              ),
-              NMSCPrimaryButton(
-                text: "Log in",
-                isFullWidth: true,
-                onClick: ()=>{},
-                isLoading: false,
-                isDisabled: false,
-                type: NmscButtonType.primary,
-              ),
-              const SizedBox(height: AppSize.x_2),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Don't have an account? "),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    NMSCTextButton(text: "Forgot Password?", onClick: () => {}),
+                  ],
+                ),
+                const SizedBox(height: AppSize.x_5),
+                NMSCPrimaryButton(
+                  text: "Log in",
+                  isFullWidth: true,
+                  onClick: () => {},
+                  isLoading: false,
+                  isDisabled: false,
+                  type: NmscButtonType.primary,
+                ),
+                const SizedBox(height: AppSize.x_2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Don't have an account? "),
 
-                  NMSCTextButton(text: "Register", onClick: ()=>{})
-                ],
-              ),
-              const SizedBox(height: AppSize.x_4),
-              GoogleLogin( onClick: () {  },),
-            ],
+                    NMSCTextButton(text: "Register", onClick: () => {}),
+                  ],
+                ),
+                const SizedBox(height: AppSize.x_4),
+                GoogleLogin(onClick: () {}),
+              ],
+            ),
           ),
         ),
       ),
