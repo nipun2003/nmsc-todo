@@ -23,6 +23,26 @@ flutter:
     - assets/img/
     - .env
   fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/nunito_ex_bold.ttf
+          weight: 800
+          style: normal
+        - asset: assets/fonts/nunito_bold.ttf
+          weight: 700
+          style: normal
+        - asset: assets/fonts/nunito_semibold.ttf
+          weight: 600
+          style: normal
+        - asset: assets/fonts/nunito_medium.ttf
+          weight: 500
+          style: normal
+        - asset: assets/fonts/nunito_regular.ttf
+          weight: 400
+          style: normal
+        - asset: assets/fonts/nunito_light.ttf
+          weight: 300
+          style: normal
     - family: Poppins
       fonts:
         - asset: assets/fonts/poppins_black.ttf

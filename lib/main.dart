@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:nmsc_todo/core/ui/Colors.dart';
+import 'package:nmsc_todo/core/ui/theme.dart';
 import 'package:nmsc_todo/core/ui/type.dart';
 import 'package:nmsc_todo/presentation/screens/splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,11 +22,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: "Poppins",
-        textTheme: appTypography,
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColor.primaryColor),
-      ),
+      theme: AppTheme.lightThemeData,
       home: const SplashScreen(),
     );
   }
