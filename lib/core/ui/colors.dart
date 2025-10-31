@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
 
 class AppColor {
   // Original Android Colors (converted from 0xFF... to 0xFF...)

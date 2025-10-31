@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
 
 // Note: Flutter's default Material 3 TextTheme uses 14 styles (display, headline,
 // title, body, label, each in large, medium, small). The Compose snippet only

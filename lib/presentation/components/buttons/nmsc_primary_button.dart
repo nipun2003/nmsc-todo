@@ -86,7 +86,7 @@ class NMSCPrimaryButton extends StatelessWidget {
     // disabledContainerColor = MaterialTheme.colorScheme.surfaceDim
     final Color disabledContainerColor = colorScheme.surfaceContainerHighest;
     // disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-    final Color disabledContentColor = colorScheme.onSurfaceVariant;
+    final Color disabledContentColor = colorScheme.primary;
 
     // 3. Determine onPressed (Disabling if loading or disabled)
     final VoidCallback? onPressed = (isLoading || isDisabled) ? null : onClick;
@@ -103,13 +103,11 @@ class NMSCPrimaryButton extends StatelessWidget {
       ),
       // shape = MaterialTheme.shapes.medium -> RoundedRectangleBorder(radius=x4)
       shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-        RoundedRectangleBorder(
-          borderRadius: AppShapes.large,
-        ),
+        RoundedRectangleBorder(borderRadius: AppShapes.large),
       ),
       // elevation = ButtonDefaults.buttonElevation(defaultElevation = x1)
       elevation: WidgetStateProperty.all<double>(
-        isDisabled?AppSize.x_0:AppSize.x_0_5,
+        isDisabled ? AppSize.x_0 : AppSize.x_0_5,
       ),
       // contentPadding = PaddingValues(horizontal = x4, vertical = x4)
       padding: WidgetStateProperty.all<EdgeInsets>(
@@ -139,9 +137,9 @@ class NMSCPrimaryButton extends StatelessWidget {
                 width: AppSize.x_5,
                 height: AppSize.x_5,
                 child: CircularProgressIndicator(
-                  // color = MaterialTheme.colorScheme.onPrimary (loading indicator should be consistent)
+                  color: isDisabled ? disabledContentColor : normalContentColor,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    colorScheme.onPrimary,
+                    isDisabled ? disabledContentColor : normalContentColor,
                   ),
                   strokeWidth: AppSize.x_0_5,
                 ),
