@@ -13,9 +13,7 @@ import 'package:nmsc_todo/presentation/components/nmsc_et_field.dart';
 import 'package:nmsc_todo/presentation/notifier/login_notifier.dart';
 import 'package:provider/provider.dart';
 
-const List<String> scopes = <String>[
-  'https://www.googleapis.com/auth/contacts.readonly',
-];
+const List<String> scopes = <String>["email", "profile"];
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -43,24 +41,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleAuthenticationEvent(
     GoogleSignInAuthenticationEvent event,
   ) async {
+    if (!mounted) return;
     // #docregion CheckAuthorization
-    final GoogleSignInAccount? user = // ...
-        // #enddocregion CheckAuthorization
-        switch (event) {
-          GoogleSignInAuthenticationEventSignIn() => event.user,
-          GoogleSignInAuthenticationEventSignOut() => null,
-        };
-    if (kDebugMode) {
-      print(
-        "Google user${user == null ? ' signed out' : ' signed in: ${user.email}'}",
-      );
-    }
-    // Check for existing authorization.
-    // #docregion CheckAuthorization
-    final GoogleSignInClientAuthorization? authorization = await user
-        ?.authorizationClient
-        .authorizationForScopes(scopes);
-    // #enddocregion CheckAuthorization
+    final viewModel = context.read<LoginNotifier>();
+    viewModel.handleGoogleAuthenticationEvent(event);
   }
 
   Future<void> _handleAuthenticationError(Object e) async {
