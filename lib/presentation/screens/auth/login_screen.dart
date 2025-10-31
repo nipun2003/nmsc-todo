@@ -1,107 +1,85 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+// Import local components and files
 import 'package:nmsc_todo/core/ui/size.dart';
+import 'package:nmsc_todo/core/ui/snackbar.dart';
 import 'package:nmsc_todo/presentation/components/auth_logo.dart';
 import 'package:nmsc_todo/presentation/components/buttons/nmsc_primary_button.dart';
 import 'package:nmsc_todo/presentation/components/buttons/nmsc_text_button.dart';
 import 'package:nmsc_todo/presentation/components/google_login.dart';
 import 'package:nmsc_todo/presentation/components/nmsc_et_field.dart';
+import 'package:nmsc_todo/presentation/events/login_events.dart';
 import 'package:nmsc_todo/presentation/notifier/login_notifier.dart';
 import 'package:provider/provider.dart';
 
-const List<String> scopes = <String>["email", "profile"];
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
-  static Route<void> route({bool isRegistering = false}) {
-    return MaterialPageRoute(
-      builder: (context) => ChangeNotifierProvider(
-        create: (context) => LoginNotifier(),
-        child: LoginPage(),
-      ),
-    );
-  }
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  String _contactText = '';
-  String _errorMessage = '';
-
-  Future<void> _handleAuthenticationEvent(
-    GoogleSignInAuthenticationEvent event,
-  ) async {
-    if (!mounted) return;
-    // #docregion CheckAuthorization
-    final viewModel = context.read<LoginNotifier>();
-    viewModel.handleGoogleAuthenticationEvent(event);
-  }
-
-  Future<void> _handleAuthenticationError(Object e) async {
-    setState(() {
-      _errorMessage = e is GoogleSignInException
-          ? _errorMessageFromSignInException(e)
-          : 'Unknown error: $e';
-    });
-  }
-
-  String _errorMessageFromSignInException(GoogleSignInException e) {
-    // In practice, an application should likely have specific handling for most
-    // or all of the, but for simplicity this just handles cancel, and reports
-    // the rest as generic errors.
-    return switch (e.code) {
-      GoogleSignInExceptionCode.canceled => 'Sign in canceled',
-      _ => 'GoogleSignInException ${e.code}: ${e.description}',
-    };
-  }
+  // StreamSubscription for one-time login events
+  late StreamSubscription<LoginEvent> _loginEventSubscription;
 
   @override
   void initState() {
     super.initState();
-    final GoogleSignIn signIn = GoogleSignIn.instance;
-    final clientId = dotenv.env["GOOGLE_CLIENT_ID"] ?? "";
-    final serverClientId = dotenv.env["GOOGLE_SERVER_CLIENT_ID"] ?? "";
-    unawaited(
-      signIn
-          .initialize(clientId: clientId, serverClientId: serverClientId)
-          .then((_) {
-            signIn.authenticationEvents
-                .listen(_handleAuthenticationEvent)
-                .onError(_handleAuthenticationError);
+    // REFACTOR: Listener subscription is now done using addPostFrameCallback
+    // to ensure the Notifier is available in the context.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final loginNotifier = context.read<LoginNotifier>();
 
-            signIn.attemptLightweightAuthentication();
-          }),
-    );
+      // Start listening to one-time events
+      _loginEventSubscription = loginNotifier.loginEvents.listen((event) {
+        if (!mounted) return;
+
+        switch (event) {
+          case LoginSuccessEvent():
+            SnackbarUtils.showSimpleSnackbar(context, 'Login Successful! 🎉');
+            // TODO: Navigate to Home screen
+            break;
+          case LoginErrorEvent(:final message):
+            SnackbarUtils.showSimpleSnackbar(context, 'Login Failed: $message');
+            break;
+        }
+      });
+
+      // Start the lightweight authentication process after setup
+      loginNotifier.attemptLightweightGoogleAuth();
+    });
   }
 
   @override
   void dispose() {
-    super.dispose();
+    // REFACTOR: Ensure both the event stream and text controllers are canceled/disposed.
+    // The Google stream is now managed and disposed inside the LoginNotifier.
+    _loginEventSubscription.cancel();
     _emailController.dispose();
     _passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    // REFACTOR: Access Notifier with context.watch for rebuilds
     final loginNotifier = context.watch<LoginNotifier>();
     final isLoading = loginNotifier.isLoading;
+
     return Scaffold(
+      // ... (Rest of the UI structure, which remains clean) ...
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsetsDirectional.symmetric(
-            horizontal: 16,
-            vertical: 32,
+            horizontal: AppSize.x_4,
+            vertical: AppSize.x_8,
           ),
           child: SizedBox(
             width: double.infinity,
@@ -114,6 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: AppSize.x_14),
                   Text("Login", style: textTheme.headlineMedium),
                   const SizedBox(height: AppSize.x_8),
+                  // Email Field
                   NmscEtField(
                     state: FieldState(validating: false),
                     hintText: "Enter your email",
@@ -123,6 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _emailController,
                   ),
                   const SizedBox(height: AppSize.x_5),
+                  // Password Field
                   NmscEtField(
                     state: FieldState(validating: false),
                     hintText: "Enter your password",
@@ -136,20 +116,21 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       NMSCTextButton(
                         text: "Forgot Password?",
-                        onClick: () => {},
+                        onClick: () => {
+                          // TODO: Implement forgot password navigation
+                        },
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSize.x_5),
+                  // Email/Password Login Button
                   NMSCPrimaryButton(
                     text: "Log in",
                     isFullWidth: true,
-                    onClick: () => {
-                      loginNotifier.login(
-                        _emailController.text,
-                        _passwordController.text,
-                      ),
-                    },
+                    onClick: () => loginNotifier.login(
+                      _emailController.text,
+                      _passwordController.text,
+                    ),
                     isLoading: isLoading,
                     isDisabled: isLoading,
                     type: NmscButtonType.primary,
@@ -159,30 +140,25 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text("Don't have an account? "),
-
-                      NMSCTextButton(text: "Register", onClick: () => {}),
+                      NMSCTextButton(
+                        text: "Register",
+                        onClick: () => {
+                          // TODO: Implement navigation to registration page
+                        },
+                      ),
                     ],
                   ),
-                  if (GoogleSignIn.instance.supportsAuthenticate())
+                  if (GoogleSignIn.instance.supportsAuthenticate()) ...[
                     const SizedBox(height: AppSize.x_4),
-                  if (GoogleSignIn.instance.supportsAuthenticate())
+                    // Google Login Button
                     GoogleLogin(
                       onClick: () async {
-                        try {
-                          await GoogleSignIn.instance.authenticate();
-                        } catch (e) {
-                          _errorMessage = e.toString();
-                        }
+                        // REFACTOR: Now calls a simple method on the Notifier
+                        // The Notifier handles the entire flow and error messages.
+                        await loginNotifier.signInWithGoogle();
                       },
                     ),
-                  const SizedBox(height: AppSize.x_4),
-                  if (_errorMessage.isNotEmpty)
-                    Text(
-                      _errorMessage,
-                      style: textTheme.bodyMedium?.copyWith(color: Colors.red),
-                    ),
-                  if (_contactText.isNotEmpty)
-                    Text(_contactText, style: textTheme.bodyMedium),
+                  ],
                 ],
               ),
             ),

@@ -1,20 +1,7 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart'
-    show
-        StatelessWidget,
-        BuildContext,
-        Widget,
-        Placeholder,
-        StatefulWidget,
-        State,
-        Navigator,
-        CircularProgressIndicator,
-        Scaffold;
-import 'package:nmsc_todo/presentation/screens/auth/login_page.dart';
-import 'package:nmsc_todo/presentation/screens/home_page.dart';
-
+import 'package:flutter/material.dart';
 import 'package:nmsc_todo/core/ui/size.dart';
-import 'package:nmsc_todo/core/utils/constants.dart';
+import 'package:nmsc_todo/presentation/notifier/auth_notifier.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -26,26 +13,12 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    _redirect();
-  }
-
-  Future<void> _redirect() async {
-    // await for for the widget to mount
-    await Future.delayed(Duration.zero);
-
-    final session = supabase.auth.currentSession;
-    if (session == null) {
-      print("No user session, redirecting to login page");
-      Navigator.of(
-        context,
-      ).pushAndRemoveUntil(LoginPage.route(), (route) => false);
-    } else {
-      Navigator.of(
-        context,
-      ).pushAndRemoveUntil(HomePage.route(), (route) => false);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authNotifier = context.read<AuthNotifier>();
+      // Initialize auth notifier to check session
+      authNotifier.initialize();
+    });
   }
 
   @override
@@ -54,7 +27,6 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset(
               "assets/img/logo.png",
@@ -62,9 +34,10 @@ class _SplashScreenState extends State<SplashScreen> {
               height: 200,
               fit: BoxFit.cover,
             ),
-            CircularProgressIndicator(),
             const SizedBox(height: AppSize.x_3),
-            Text("Loading Data..."),
+            const CircularProgressIndicator(),
+            const SizedBox(height: AppSize.x_3),
+            const Text("Checking session..."),
           ],
         ),
       ),
