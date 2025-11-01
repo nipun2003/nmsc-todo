@@ -7,7 +7,6 @@ import 'package:nmsc_todo/presentation/events/login_events.dart';
 
 const List<String> _scopes = <String>["email", "profile"];
 mixin GoogleAuth on ChangeNotifier {
-
   GoogleSignIn get googleSignIn;
   String get clientId;
   String get serverClientId;
@@ -28,11 +27,11 @@ mixin GoogleAuth on ChangeNotifier {
         googleSignIn
             .initialize(clientId: clientId, serverClientId: serverClientId)
             .then((_) {
-          // Store the subscription for later disposal
-          _googleSubscription = googleSignIn.authenticationEvents
-              .listen(_handleAuthenticationEvent)
-            ..onError(_handleAuthenticationError);
-        }),
+              // Store the subscription for later disposal
+              _googleSubscription = googleSignIn.authenticationEvents.listen(
+                _handleAuthenticationEvent,
+              )..onError(_handleAuthenticationError);
+            }),
       );
     }
   }
@@ -50,7 +49,9 @@ mixin GoogleAuth on ChangeNotifier {
       await googleSignIn.authenticate();
       // The rest of the authentication flow is handled by the stream listener.
     } catch (e) {
-      _handleAuthenticationError(e); // Use the same error handler for consistency
+      _handleAuthenticationError(
+        e,
+      ); // Use the same error handler for consistency
     } finally {
       setLoading(false);
     }
@@ -59,8 +60,8 @@ mixin GoogleAuth on ChangeNotifier {
   // --- GOOGLE STREAM HANDLERS (Moved from UI) ---
 
   Future<void> _handleAuthenticationEvent(
-      GoogleSignInAuthenticationEvent event,
-      ) async {
+    GoogleSignInAuthenticationEvent event,
+  ) async {
     if (isLoading) return;
     setLoading(true); // Set loading while we process the stream event
     try {
@@ -87,7 +88,6 @@ mixin GoogleAuth on ChangeNotifier {
       final authorizationToken = authorization.accessToken;
       await authService.signInWithGoogle(idToken, authorizationToken);
       emitLoginEvent(LoginSuccessEvent());
-
     } catch (e) {
       emitLoginEvent(LoginErrorEvent(e.toString()));
     } finally {
@@ -99,6 +99,9 @@ mixin GoogleAuth on ChangeNotifier {
     final errorMessage = e is GoogleSignInException
         ? _errorMessageFromSignInException(e)
         : 'Unknown error: $e';
+    if (kDebugMode) {
+      print('Google Sign-In Error: $errorMessage');
+    }
     emitLoginEvent(LoginErrorEvent(errorMessage));
   }
 
@@ -110,11 +113,9 @@ mixin GoogleAuth on ChangeNotifier {
     };
   }
 
-
   @override
   void dispose() {
     _googleSubscription.cancel();
     super.dispose();
   }
-
 }
