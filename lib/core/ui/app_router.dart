@@ -6,11 +6,14 @@ import 'package:nmsc_todo/core/ui/custom_transition.dart';
 import 'package:nmsc_todo/data/remote/service/supabase_auth_service.dart';
 import 'package:nmsc_todo/di/app_module.dart';
 import 'package:nmsc_todo/domain/use_cases/login_use_case.dart';
+import 'package:nmsc_todo/domain/use_cases/register_use_case.dart';
 import 'package:nmsc_todo/presentation/events/login_events.dart';
+import 'package:nmsc_todo/presentation/events/register_events.dart';
 import 'package:nmsc_todo/presentation/layouts/auth_layout.dart';
 import 'package:nmsc_todo/presentation/notifier/auth_layout_notifier.dart';
 import 'package:nmsc_todo/presentation/notifier/auth_notifier.dart';
 import 'package:nmsc_todo/presentation/notifier/login_notifier.dart';
+import 'package:nmsc_todo/presentation/notifier/register_notifier.dart';
 import 'package:nmsc_todo/presentation/screens/auth/login_screen.dart';
 import 'package:nmsc_todo/presentation/screens/auth/register_screen.dart';
 import 'package:nmsc_todo/presentation/screens/home_screen.dart';
@@ -84,7 +87,15 @@ class AppRouter {
             GoRoute(
               path: "/auth/register",
               pageBuilder: (context, state) {
-                final screen = const RegisterScreen();
+                 final registerUseCase = locator<RegisterUseCase>();
+                final eventBus = locator<RegisterEventBus>();
+                final screen = ChangeNotifierProvider(
+                  create: (context) => RegisterNotifier(
+                    registerUseCase: registerUseCase,
+                    eventBus: eventBus,
+                  ),
+                  child: const RegisterScreen(),
+                );
                 return buildSlideTransitionPage(
                   state: state,
                   child: screen,

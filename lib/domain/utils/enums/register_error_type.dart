@@ -1,0 +1,6 @@
+
+
+enum RegisterErrorType {
+  unknown,
+  emailAlreadyInUse,
+}
