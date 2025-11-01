@@ -1,7 +1,6 @@
-import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-// Helper function to create a slide-in/slide-out transition page
 CustomTransitionPage buildSlideTransitionPage({
   required GoRouterState state,
   required Widget child,
@@ -10,22 +9,36 @@ CustomTransitionPage buildSlideTransitionPage({
   return CustomTransitionPage(
     key: key,
     child: child,
-    // The transition duration for a smooth slide
     transitionDuration: const Duration(milliseconds: 300), 
+    reverseTransitionDuration: const Duration(milliseconds: 300), // Optional: specify duration for pop
+    
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      // Define the direction of the slide: 
-      // start at 1.0 (off-screen right), end at 0.0 (on-screen)
-      const begin = Offset(1.0, 0.0);
-      const end = Offset.zero;
       const curve = Curves.easeOut;
 
-      final tween = Tween(begin: begin, end: end).chain(
-        CurveTween(curve: curve),
-      );
+      // 1. Animation for the INCOMING screen (New Page)
+      // Starts off-screen right (Offset(1.0, 0.0)) and ends at center (Offset.zero)
+      final incomingTween = Tween(
+        begin: const Offset(1.0, 0.0), // Start from right
+        end: Offset.zero,             // End in center
+      ).chain(CurveTween(curve: curve));
+
+      // 2. Animation for the OUTGOING screen (Current Page)
+      // Starts at center (Offset.zero) and ends off-screen left (Offset(-1.0, 0.0))
+      final outgoingTween = Tween(
+        begin: Offset.zero,           // Start in center
+        end: const Offset(-1.0, 0.0), // End to the left
+      ).chain(CurveTween(curve: curve));
 
       return SlideTransition(
-        position: animation.drive(tween),
-        child: child,
+        // This SlideTransition applies to the new page (`child`)
+        position: animation.drive(incomingTween),
+        child: SlideTransition(
+          // This nested SlideTransition applies the outgoing animation 
+          // to the new page's container when the OLD page is moving out.
+          // This is what creates the "pushing" effect on the OLD screen.
+          position: secondaryAnimation.drive(outgoingTween),
+          child: child,
+        ),
       );
     },
   );
