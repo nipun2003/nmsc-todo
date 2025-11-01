@@ -1,81 +1,66 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-// Import local files
-import 'package:nmsc_todo/data/remote/service/supabase_auth_service.dart';
+import 'package:nmsc_todo/domain/use_cases/login_use_case.dart';
 import 'package:nmsc_todo/presentation/events/login_events.dart';
-import 'package:nmsc_todo/presentation/mixin/google_auth.dart';
+import 'package:nmsc_todo/presentation/utils/validators.dart';
 
-class LoginNotifier extends ChangeNotifier with LoginEventNotifier, GoogleAuth {
-  // --- INJECTED DEPENDENCIES ---
-  final GoogleSignIn _googleSignIn;
-  final String _clientId;
-  final String _serverClientId;
-  final SupabaseAuthService _authService;
+class LoginNotifier extends ChangeNotifier {
 
-  // --- INTERNAL STATE & SUBSCRIPTION ---
+  final LoginUseCase _loginUseCase;
+  final LoginEventBus _eventBus;
+
   bool _isLoading = false;
-  late StreamSubscription<GoogleSignInAuthenticationEvent> _googleSubscription;
+  String? _emailError;
+  String? _passwordError;
 
-  @override
+  // --- Getters ---
   bool get isLoading => _isLoading;
+  String? get emailError => _emailError;
+  String? get passwordError => _passwordError;
+  bool get isFormValid =>
+      _emailError == null && _passwordError == null;
 
   LoginNotifier({
-    required GoogleSignIn googleSignIn,
-    required String clientId,
-    required String serverClientId,
-    required SupabaseAuthService authService,
-  }) : _googleSignIn = googleSignIn,
-       _clientId = clientId,
-       _serverClientId = serverClientId,
-       _authService = authService;
+    required LoginUseCase loginUseCase,
+    required LoginEventBus eventBus,
+  }) : _loginUseCase = loginUseCase,
+       _eventBus = eventBus;
 
-  @override
-  void setLoading(bool loading) {
-    _isLoading = loading;
+  // --- Validation methods ---
+  void validateEmail(String value) {
+    _emailError = UIValidators.validateEmail(value.trim());
     notifyListeners();
   }
 
-  // --- CORE LOGIN LOGIC (Email/Password) ---
+  void validatePassword(String value) {
+    _passwordError = UIValidators.validatePassword(value.trim());
+    notifyListeners();
+  }
 
-  void login(String email, String password) async {
-    if (isLoading) return;
+  // --- Auth logic ---
+  Future<void> login(String email, String password) async {
+    if (_isLoading) return;
+    _emailError = UIValidators.validateEmail(email);
+    _passwordError = UIValidators.validatePassword(password);
+    notifyListeners();
+
+    if (_emailError != null || _passwordError != null) return;
+
     setLoading(true);
+
     try {
-      await _authService.signInWithEmailAndPassword(email, password);
-      emitLoginEvent(LoginSuccessEvent());
+      await _loginUseCase.execute(email, password);
+      _eventBus.emitLoginEvent(LoginSuccessEvent());
     } catch (e) {
-      emitLoginEvent(LoginErrorEvent(e.toString()));
+      _eventBus.emitLoginEvent(LoginErrorEvent(e.toString()));
     } finally {
       setLoading(false);
     }
   }
 
-  @override
-  void dispose() {
-    // REFACTOR: Cancel ALL subscriptions managed by the Notifier.
-    _googleSubscription.cancel();
-    super.dispose();
-  }
-
-  @override
-  GoogleSignIn get googleSignIn {
-    return _googleSignIn;
-  }
-
-  @override
-  String get clientId {
-    return _clientId;
-  }
-
-  @override
-  String get serverClientId {
-    return _serverClientId;
-  }
-
-  @override
-  SupabaseAuthService get authService {
-    return _authService;
+  void setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
   }
 }

@@ -11,14 +11,13 @@ class LoginErrorEvent extends LoginEvent {
   final String message;
 
   LoginErrorEvent(this.message);
-}
+}// Assuming your events are here
 
-
-mixin LoginEventNotifier on ChangeNotifier {
+class LoginEventBus {
   // Use a StreamController to manage the flow of events
-  // IMPORTANT: Use a broadcast stream so multiple widgets/subscribers can listen.
+  // Use a broadcast stream so multiple widgets/subscribers can listen.
   final StreamController<LoginEvent> _eventController =
-  StreamController<LoginEvent>.broadcast();
+      StreamController<LoginEvent>.broadcast();
 
   // Expose the stream publicly for widgets to listen to
   Stream<LoginEvent> get loginEvents => _eventController.stream;
@@ -28,14 +27,11 @@ mixin LoginEventNotifier on ChangeNotifier {
     if (kDebugMode) {
       print('Emitting Login Event: $event');
     }
-    // Add the event to the stream sink
     _eventController.sink.add(event);
   }
 
-  // Ensure the stream controller is closed when the notifier is disposed
-  @override
+  // Ensure the stream controller is closed when the service is disposed
   void dispose() {
     _eventController.close();
-    super.dispose();
   }
 }

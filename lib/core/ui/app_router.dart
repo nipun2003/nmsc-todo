@@ -3,6 +3,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:nmsc_todo/data/remote/service/supabase_auth_service.dart';
+import 'package:nmsc_todo/di/app_module.dart';
+import 'package:nmsc_todo/domain/use_cases/login_use_case.dart';
+import 'package:nmsc_todo/presentation/events/login_events.dart';
+import 'package:nmsc_todo/presentation/layouts/auth_layout.dart';
+import 'package:nmsc_todo/presentation/notifier/auth_layout_notifier.dart';
 import 'package:nmsc_todo/presentation/notifier/auth_notifier.dart';
 import 'package:nmsc_todo/presentation/notifier/login_notifier.dart';
 import 'package:nmsc_todo/presentation/screens/auth/login_screen.dart';
@@ -37,22 +42,39 @@ class AppRouter {
           builder: (context, state) => const SplashScreen(),
         ),
         GoRoute(path: "/", builder: (context, state) => const HomeScreen()),
-        GoRoute(
-          path: "/auth/login",
-          builder: (context, state) {
+        ShellRoute(
+          builder: (context, state, child) {
             final signIn = GoogleSignIn.instance;
             final clientId = dotenv.env["GOOGLE_CLIENT_ID"] ?? "";
             final serverClientId = dotenv.env["GOOGLE_SERVER_CLIENT_ID"] ?? "";
+            final eventBus = locator<LoginEventBus>();
             return ChangeNotifierProvider(
-              create: (context) => LoginNotifier(
+              create: (context) => AuthLayoutNotifier(
                 googleSignIn: signIn,
                 clientId: clientId,
                 serverClientId: serverClientId,
                 authService: supabaseAuthService,
+                eventBus: eventBus
               )..initializeGoogleSignInAndListen(),
-              child: const LoginScreen(),
+              child: AuthLayout(child: child),
             );
           },
+          routes: [
+            GoRoute(
+              path: "/auth/login",
+              builder: (context, state) {
+                final loginUseCase = locator<LoginUseCase>();
+                final eventBus = locator<LoginEventBus>();
+                return ChangeNotifierProvider(
+                  create: (context) => LoginNotifier(
+                    loginUseCase: loginUseCase,
+                    eventBus: eventBus,
+                  ),
+                  child: const LoginScreen(),
+                );
+              },
+            ),
+          ],
         ),
       ],
     );
