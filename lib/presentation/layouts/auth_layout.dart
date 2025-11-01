@@ -49,22 +49,34 @@ class _AuthLayoutState extends State<AuthLayout> {
     super.dispose();
   }
 
+  // In auth_layout.dart, inside _AuthLayoutState's build method:
+
   @override
   Widget build(BuildContext context) {
     final notifier = context.watch<AuthLayoutNotifier>();
+
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Stack(
-            children:[ SingleChildScrollView(
+        child: Stack(
+          // Used for overlaying the loading indicator
+          alignment: Alignment.center,
+          children: [
+            // 1. Main Content Area (Scrollable Screen + Google Button)
+            Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSize.x_4,
                 vertical: AppSize.x_8,
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  widget.child,
+                  // Flexible takes up all available space for the child content.
+                  // This ensures the Google button is pushed to the bottom.
+                  Expanded(
+                    child: widget
+                        .child, // LoginScreen or RegisterScreen slides here
+                  ),
+
+                  // 2. Google Button (This part STAYS PUT)
                   if (GoogleSignIn.instance.supportsAuthenticate()) ...[
                     const SizedBox(height: AppSize.x_4),
                     GoogleLogin(
@@ -76,12 +88,11 @@ class _AuthLayoutState extends State<AuthLayout> {
                 ],
               ),
             ),
+
+            // 3. Loading Indicator Overlay
             if (notifier.isLoading)
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ],
-          ),
+              const Center(child: CircularProgressIndicator()),
+          ],
         ),
       ),
     );

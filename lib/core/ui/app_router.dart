@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:nmsc_todo/core/ui/custom_transition.dart';
 import 'package:nmsc_todo/data/remote/service/supabase_auth_service.dart';
 import 'package:nmsc_todo/di/app_module.dart';
 import 'package:nmsc_todo/domain/use_cases/login_use_case.dart';
@@ -11,6 +12,7 @@ import 'package:nmsc_todo/presentation/notifier/auth_layout_notifier.dart';
 import 'package:nmsc_todo/presentation/notifier/auth_notifier.dart';
 import 'package:nmsc_todo/presentation/notifier/login_notifier.dart';
 import 'package:nmsc_todo/presentation/screens/auth/login_screen.dart';
+import 'package:nmsc_todo/presentation/screens/auth/register_screen.dart';
 import 'package:nmsc_todo/presentation/screens/home_screen.dart';
 import 'package:nmsc_todo/presentation/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +56,7 @@ class AppRouter {
                 clientId: clientId,
                 serverClientId: serverClientId,
                 authService: supabaseAuthService,
-                eventBus: eventBus
+                eventBus: eventBus,
               )..initializeGoogleSignInAndListen(),
               child: AuthLayout(child: child),
             );
@@ -62,15 +64,31 @@ class AppRouter {
           routes: [
             GoRoute(
               path: "/auth/login",
-              builder: (context, state) {
+              pageBuilder: (context, state) {
                 final loginUseCase = locator<LoginUseCase>();
                 final eventBus = locator<LoginEventBus>();
-                return ChangeNotifierProvider(
+                final screen = ChangeNotifierProvider(
                   create: (context) => LoginNotifier(
                     loginUseCase: loginUseCase,
                     eventBus: eventBus,
                   ),
                   child: const LoginScreen(),
+                );
+                return buildSlideTransitionPage(
+                  state: state,
+                  child: screen,
+                  key: ValueKey("Login"),
+                );
+              },
+            ),
+            GoRoute(
+              path: "/auth/register",
+              pageBuilder: (context, state) {
+                final screen = const RegisterScreen();
+                return buildSlideTransitionPage(
+                  state: state,
+                  child: screen,
+                  key: const ValueKey("Register"),
                 );
               },
             ),
