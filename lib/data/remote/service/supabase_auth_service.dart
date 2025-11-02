@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseAuthService {
@@ -11,9 +12,21 @@ class SupabaseAuthService {
       email: email,
       password: password,
     );
+    if(kDebugMode){
+      print("Sign-in response for Email: $email - Session: ${response.session}, User ID: ${response.user?.id}");
+    }
     if (response.session == null && response.user == null) {
       throw Exception("Login failed: Invalid credentials or unverified email.");
     }
+
+    final bool emailConfirmed = response.user?.emailConfirmedAt != null;
+    if(kDebugMode){
+      print("User ${response.user?.id} email confirmed: $emailConfirmed");
+    }
+    if (!emailConfirmed) {
+      throw Exception("Login failed: Email not verified.");
+    }
+   
     return response.user!.id;
   }
 
@@ -36,6 +49,27 @@ class SupabaseAuthService {
       rethrow;
     }
   }
-}
 
-final supabaseAuthService = SupabaseAuthService();
+  Future<String> signUpWithEmailAndPassword(
+    {
+      required String email,
+      required String password,
+      required String fullName,
+    }
+  ) async {
+    if(kDebugMode){
+      print("Signing up user with Email: $email, Name: $fullName");
+    }
+    final response = await _supabase.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        "name": fullName,
+      }
+    );
+    if (response.user == null) {
+      throw Exception("Sign-up failed: Unable to create user.");
+    }
+    return response.user!.id;
+  }
+}

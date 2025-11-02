@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:nmsc_todo/domain/models/login_result.dart';
 import 'package:nmsc_todo/domain/use_cases/login_use_case.dart';
 import 'package:nmsc_todo/presentation/events/login_events.dart';
 import 'package:nmsc_todo/presentation/utils/validators.dart';
@@ -50,7 +51,11 @@ class LoginNotifier extends ChangeNotifier {
     setLoading(true);
 
     try {
-      await _loginUseCase.execute(email, password);
+      final response = await _loginUseCase.execute(email, password);
+      if (response is LoginFailure) {
+        _eventBus.emitLoginEvent(LoginErrorEvent(response.message ?? 'Unknown error'));
+        return;
+      }
       _eventBus.emitLoginEvent(LoginSuccessEvent());
     } catch (e) {
       _eventBus.emitLoginEvent(LoginErrorEvent(e.toString()));

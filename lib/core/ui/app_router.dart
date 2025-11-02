@@ -53,6 +53,7 @@ class AppRouter {
             final clientId = dotenv.env["GOOGLE_CLIENT_ID"] ?? "";
             final serverClientId = dotenv.env["GOOGLE_SERVER_CLIENT_ID"] ?? "";
             final eventBus = locator<LoginEventBus>();
+            final supabaseAuthService = locator<SupabaseAuthService>();
             return ChangeNotifierProvider(
               create: (context) => AuthLayoutNotifier(
                 googleSignIn: signIn,

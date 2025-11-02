@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:nmsc_todo/core/utils/custom_response.dart';
 import 'package:nmsc_todo/domain/use_cases/register_use_case.dart';
+import 'package:nmsc_todo/domain/utils/enums/register_error_type.dart';
 import 'package:nmsc_todo/presentation/events/register_events.dart';
 import 'package:nmsc_todo/presentation/utils/validators.dart';
 
@@ -23,14 +24,16 @@ class RegisterNotifier extends ChangeNotifier {
   bool get isFormValid =>
       _emailError == null && _passwordError == null && _nameError == null && _file != null;
 
-  final RegisterUseCase? _registerUseCase;
-  final RegisterEventBus? _eventBus;
+  final RegisterUseCase _registerUseCase;
+  final RegisterEventBus _eventBus;
 
   RegisterNotifier({
-    RegisterUseCase? registerUseCase,
-    RegisterEventBus? eventBus,
+    required RegisterUseCase registerUseCase,
+    required RegisterEventBus eventBus,
   })  : _registerUseCase = registerUseCase,
         _eventBus = eventBus;
+
+  Stream<RegisterEvent> get registerEvent => _eventBus.registerEvents;
 
   // --- Validation methods ---
   void validateName(String value) {
@@ -85,23 +88,23 @@ class RegisterNotifier extends ChangeNotifier {
     setLoading(true);
 
     try {
-      final ruc = _registerUseCase;
-      if (ruc != null) {
-        final res = await ruc.execute(name, email, password, file);
+        if(kDebugMode){
+          print("Registering user with Name: $name, Email: $email");
+        }
+        final res = await _registerUseCase.execute(name, email, password, file);
         if (res is SuccessResponse) {
-          _eventBus?.emitRegisterEvent(RegisterSuccessEvent());
+          _eventBus.emitRegisterEvent(RegisterSuccessEvent());
         } else if (res is ErrorResponse) {
-          _eventBus?.emitRegisterEvent(RegisterErrorEvent(res.message ?? 'Unknown error'));
+          if(kDebugMode){
+            print("Registration error: ${res.message}");
+          }
+          _eventBus.emitRegisterEvent(RegisterErrorEvent(res.message ?? 'Unknown error', res.errorType ?? RegisterErrorType.unknown));
         } else {
           // Fallback
-          _eventBus?.emitRegisterEvent(RegisterSuccessEvent());
+          _eventBus.emitRegisterEvent(RegisterSuccessEvent());
         }
-      } else {
-        // No use-case provided, emit success as a fallback
-        _eventBus?.emitRegisterEvent(RegisterSuccessEvent());
-      }
     } catch (e) {
-      _eventBus?.emitRegisterEvent(RegisterErrorEvent(e.toString()));
+      _eventBus.emitRegisterEvent(RegisterErrorEvent(e.toString(), RegisterErrorType.unknown));
     } finally {
       setLoading(false);
     }

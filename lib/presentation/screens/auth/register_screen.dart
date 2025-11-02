@@ -2,14 +2,19 @@
 
 
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nmsc_todo/core/ui/size.dart';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
+import 'package:nmsc_todo/core/ui/snackbar.dart';
+import 'package:nmsc_todo/domain/utils/enums/register_error_type.dart';
 import 'package:nmsc_todo/presentation/components/buttons/nmsc_primary_button.dart';
 import 'package:nmsc_todo/presentation/components/buttons/nmsc_text_button.dart';
 import 'package:nmsc_todo/presentation/components/nmsc_et_field.dart';
+import 'package:nmsc_todo/presentation/events/register_events.dart';
 import 'package:nmsc_todo/presentation/notifier/register_notifier.dart';
 import 'package:provider/provider.dart';
 
@@ -27,6 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
   Uint8List? _pickedImage;
+  late StreamSubscription<RegisterEvent> _registerEventSubscription;
 
   @override
   void initState() {
@@ -37,7 +43,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
 
-    
+    final notifier = context.read<RegisterNotifier>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+
+      _registerEventSubscription = notifier.registerEvent.listen((event) {
+        if (!mounted) return;
+
+        switch (event) {
+          case RegisterSuccessEvent():
+            SnackbarUtils.showSimpleSnackbar(context, 'Registration Successful 🎉');
+            context.pop();
+            break;
+          case RegisterErrorEvent(:final message):
+            _showErrorMessage(event.type, message);
+            break;
+        }
+      });
+    });
+  }
+
+  void _showErrorMessage(RegisterErrorType type, String message) {
+    String displayMessage = message;
+    switch (type) {
+      case RegisterErrorType.networkRequestFailed:
+        displayMessage = "Network error occurred. Please check your connection.";
+        break;
+      case RegisterErrorType.emailAlreadyInUse:
+        displayMessage = "The email address is already in use by another account.";
+        break;
+      case RegisterErrorType.unknown:
+        displayMessage = "An unknown error occurred. Please try again.";
+        break;
+      case RegisterErrorType.weakPassword:
+        displayMessage = "The password provided is too weak.";
+        break;
+      case RegisterErrorType.invalidEmail:
+        displayMessage = "The email address is not valid.";
+        break;
+      case RegisterErrorType.profileUpdateFailed:
+        displayMessage = "User registration succeeded, but updating profile failed. You can log in, but profile info may be incomplete.";
+        break;
+    }
+    SnackbarUtils.showSimpleSnackbar(context, displayMessage);
   }
 
   @override
@@ -46,6 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _registerEventSubscription.cancel();
     super.dispose();
   }
 
@@ -182,7 +231,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               isDisabled: isDisabled,
               isLoading: notifier.isLoading,
               onPressed: () {
-                // Handle login action
+                notifier.register(
+                  name: _nameController.text.trim(),
+                  email: _emailController.text.trim(),
+                  password: _passwordController.text.trim(),
+                  file: _pickedImage,
+                );
               },
             ),
             const SizedBox(height: AppSize.x_2),

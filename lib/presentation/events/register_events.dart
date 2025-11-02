@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:nmsc_todo/domain/utils/enums/register_error_type.dart';
 
 sealed class RegisterEvent {}
 
@@ -10,8 +11,9 @@ class RegisterSuccessEvent extends RegisterEvent {}
 
 class RegisterErrorEvent extends RegisterEvent {
   final String message;
+  final RegisterErrorType type;
 
-  RegisterErrorEvent(this.message);
+  RegisterErrorEvent(this.message, this.type);
 }// Assuming your events are here
 
 class RegisterEventBus {
